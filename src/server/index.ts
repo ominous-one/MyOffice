@@ -42,7 +42,7 @@ app.use('/api/settings', settingsRouter)
 
 // Serve React client in production
 if (env.isProduction) {
-  const publicDir = path.join(__dirname, 'public')
+  const publicDir = path.join(__dirname, '..', 'public')
   app.use(express.static(publicDir))
   app.get('*', (_req, res) => {
     res.sendFile(path.join(publicDir, 'index.html'))
