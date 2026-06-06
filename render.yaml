@@ -1,0 +1,53 @@
+services:
+  - type: web
+    name: claude-cowork
+    runtime: node
+    plan: standard
+    region: oregon
+    branch: main
+    healthCheckPath: /api/health
+    buildCommand: npm ci --ignore-scripts && npm run build
+    startCommand: node dist/server/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: claude-cowork-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: claude-cowork-redis
+          property: connectionString
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: RENDER_API_KEY
+        sync: false
+      - key: COWORK_PASSWORD_HASH
+        sync: false
+      - key: COWORK_JWT_SECRET
+        sync: false
+      - key: COWORK_DAEMON_TOKEN
+        sync: false
+      - key: HQ_PUBLIC_URL
+        value: https://cowork.lotview.ai
+      - key: LOG_LEVEL
+        value: info
+
+databases:
+  - name: claude-cowork-db
+    plan: standard
+    databaseName: cowork
+    user: cowork
+    region: oregon
+    postgresMajorVersion: 16
+    ipAllowList: []
+
+  - name: claude-cowork-redis
+    plan: starter
+    region: oregon
+    ipAllowList: []
+    maxmemoryPolicy: noeviction

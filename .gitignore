@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+*.local
+.DS_Store
+*.log
+coverage/
+.vite/
+src/client/.vite/
+daemon.toml
+*.exe
+*.tsbuildinfo
