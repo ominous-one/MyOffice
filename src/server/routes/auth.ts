@@ -48,7 +48,7 @@ router.post('/login', loginLimiter, async (req, res) => {
       tokenHash,
       deviceLabel: detectDevice(req.headers['user-agent']),
       userAgent: req.headers['user-agent'],
-      ipAddress: req.ip ?? null,
+      ipAddress: sanitizeIp(req.ip),
       expiresAt: new Date(Date.now() + SESSION_DURATION_SECONDS * 1000),
     })
   } catch (err) {
@@ -102,6 +102,14 @@ router.delete('/sessions/:id', requireAuth, async (req, res) => {
     .where(eq(sessions.id, req.params.id))
   res.json({ ok: true })
 })
+
+function sanitizeIp(ip?: string): string | null {
+  if (!ip) return null
+  // With multiple proxies, req.ip may be "a.b.c.d, e.f.g.h" — take the first token
+  const first = ip.split(',')[0].trim()
+  // Basic validity check — must look like an IP (v4 or v6)
+  return /^[\d:.a-fA-F]+$/.test(first) ? first : null
+}
 
 function detectDevice(ua?: string): string {
   if (!ua) return 'Unknown'
