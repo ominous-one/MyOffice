@@ -39,7 +39,7 @@ services:
 
 databases:
   - name: claude-cowork-db
-    plan: basic
+    plan: free
     databaseName: cowork
     user: cowork
     region: oregon
