@@ -9,7 +9,7 @@
   "scripts": {
     "build": "npm run build:client && npm run build:server",
     "build:client": "vite build",
-    "build:server": "tsc -p tsconfig.server.json",
+    "build:server": "tsc -p tsconfig.server.json && cp -r src/server/db/migrations dist/server/db/",
     "start": "node dist/server/index.js",
     "dev": "concurrently -n server,client -c cyan,magenta \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "tsx watch --tsconfig tsconfig.server.json src/server/index.ts",
