@@ -39,7 +39,7 @@ services:
 
 databases:
   - name: claude-cowork-db
-    plan: standard
+    plan: basic
     databaseName: cowork
     user: cowork
     region: oregon
@@ -47,6 +47,6 @@ databases:
     ipAllowList: []
 
   - name: claude-cowork-redis
-    plan: starter
+    plan: free
     region: oregon
     ipAllowList: []
