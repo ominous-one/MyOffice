@@ -39,7 +39,7 @@ services:
 
   - type: redis
     name: claude-cowork-redis
-    plan: free
+    plan: starter
     region: oregon
     ipAllowList: []
 
