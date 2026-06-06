@@ -42,4 +42,120 @@
     white-space: pre-wrap;
     word-break: break-word;
   }
+
+  /* ── office floor sprites ──────────────────────────────────────────────── */
+  .office-floor {
+    height: 52px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    user-select: none;
+  }
+
+  .office-floor::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--border);
+  }
+
+  .sprite {
+    position: absolute;
+    bottom: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+  }
+
+  .sprite-head {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .sprite-body {
+    width: 12px;
+    height: 14px;
+    border-radius: 2px 2px 0 0;
+    background: currentColor;
+    opacity: 0.8;
+  }
+
+  .sprite-legs {
+    width: 12px;
+    height: 6px;
+    display: flex;
+    gap: 2px;
+  }
+
+  .sprite-leg {
+    flex: 1;
+    border-radius: 0 0 2px 2px;
+    background: currentColor;
+    opacity: 0.7;
+    transform-origin: top center;
+  }
 }
+
+/* sprite walk keyframes (outside @layer so they apply globally) */
+@keyframes sprite-walk-a {
+  0%   { left: 5%;  transform: scaleX(1); }
+  49%  { left: 80%; transform: scaleX(1); }
+  50%  { left: 80%; transform: scaleX(-1); }
+  99%  { left: 5%;  transform: scaleX(-1); }
+  100% { left: 5%;  transform: scaleX(1); }
+}
+@keyframes sprite-walk-b {
+  0%   { left: 15%; transform: scaleX(-1); }
+  49%  { left: 72%; transform: scaleX(-1); }
+  50%  { left: 72%; transform: scaleX(1); }
+  99%  { left: 15%; transform: scaleX(1); }
+  100% { left: 15%; transform: scaleX(-1); }
+}
+@keyframes sprite-walk-c {
+  0%   { left: 30%; transform: scaleX(1); }
+  49%  { left: 88%; transform: scaleX(1); }
+  50%  { left: 88%; transform: scaleX(-1); }
+  99%  { left: 30%; transform: scaleX(-1); }
+  100% { left: 30%; transform: scaleX(1); }
+}
+@keyframes sprite-walk-d {
+  0%   { left: 55%; transform: scaleX(-1); }
+  49%  { left: 10%; transform: scaleX(-1); }
+  50%  { left: 10%; transform: scaleX(1); }
+  99%  { left: 55%; transform: scaleX(1); }
+  100% { left: 55%; transform: scaleX(-1); }
+}
+@keyframes sprite-bob {
+  0%, 100% { bottom: 6px; }
+  50%       { bottom: 9px; }
+}
+@keyframes leg-swing-l {
+  0%, 100% { transform: rotate(-20deg); }
+  50%      { transform: rotate(20deg); }
+}
+@keyframes leg-swing-r {
+  0%, 100% { transform: rotate(20deg); }
+  50%      { transform: rotate(-20deg); }
+}
+
+.sprite-1 { color: #60a5fa; animation: sprite-walk-a 9s  linear infinite, sprite-bob 0.35s ease-in-out infinite; }
+.sprite-2 { color: #a78bfa; animation: sprite-walk-b 12s linear infinite, sprite-bob 0.35s ease-in-out infinite 0.1s; }
+.sprite-3 { color: #34d399; animation: sprite-walk-c 7s  linear infinite, sprite-bob 0.35s ease-in-out infinite 0.2s; }
+.sprite-4 { color: #fbbf24; animation: sprite-walk-d 10s linear infinite, sprite-bob 0.35s ease-in-out infinite 0.05s; }
+
+.sprite-1 .sprite-leg:first-child { animation: leg-swing-l 0.35s ease-in-out infinite; }
+.sprite-1 .sprite-leg:last-child  { animation: leg-swing-r 0.35s ease-in-out infinite; }
+.sprite-2 .sprite-leg:first-child { animation: leg-swing-l 0.35s ease-in-out infinite 0.1s; }
+.sprite-2 .sprite-leg:last-child  { animation: leg-swing-r 0.35s ease-in-out infinite 0.1s; }
+.sprite-3 .sprite-leg:first-child { animation: leg-swing-l 0.35s ease-in-out infinite 0.2s; }
+.sprite-3 .sprite-leg:last-child  { animation: leg-swing-r 0.35s ease-in-out infinite 0.2s; }
+.sprite-4 .sprite-leg:first-child { animation: leg-swing-l 0.35s ease-in-out infinite 0.05s; }
+.sprite-4 .sprite-leg:last-child  { animation: leg-swing-r 0.35s ease-in-out infinite 0.05s; }

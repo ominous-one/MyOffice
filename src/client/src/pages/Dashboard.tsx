@@ -51,6 +51,19 @@ export function Dashboard() {
     }
   }
 
+  function Sprite({ n }: { n: 1 | 2 | 3 | 4 }) {
+    return (
+      <div className={`sprite sprite-${n}`}>
+        <div className="sprite-head" />
+        <div className="sprite-body" />
+        <div className="sprite-legs">
+          <div className="sprite-leg" />
+          <div className="sprite-leg" />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col min-h-0 h-full">
       {/* Header */}
@@ -173,6 +186,14 @@ export function Dashboard() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Office floor — 4 animated sprites (UU-7 visual spike) */}
+      <div className="office-floor">
+        <Sprite n={1} />
+        <Sprite n={2} />
+        <Sprite n={3} />
+        <Sprite n={4} />
       </div>
     </div>
   )

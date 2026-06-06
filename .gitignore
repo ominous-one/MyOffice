@@ -10,3 +10,4 @@ src/client/.vite/
 daemon.toml
 *.exe
 *.tsbuildinfo
+.render-secrets.txt

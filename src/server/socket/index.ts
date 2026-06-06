@@ -26,10 +26,9 @@ export function initSocket(httpServer: HTTPServer): Server {
   })
 
   io.use(async (socket, next) => {
-    const token = socket.handshake.headers.cookie
-      ?.split(';')
-      .find((c) => c.trim().startsWith('cowork_session='))
-      ?.split('=')[1]
+    const cookieHeader = socket.handshake.headers.cookie ?? ''
+    const sessionCookie = cookieHeader.split(';').find((c) => c.trim().startsWith('cowork_session='))
+    const token = sessionCookie ? sessionCookie.trim().slice('cowork_session='.length) : undefined
 
     if (!token) { next(new Error('Not authenticated')); return }
 

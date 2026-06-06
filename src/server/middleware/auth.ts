@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
-import { createHash } from 'crypto'
+import { createHash, timingSafeEqual } from 'crypto'
 import { db } from '../db/index.js'
 import { sessions } from '../db/schema.js'
 import { eq, and, isNull, gt } from 'drizzle-orm'
@@ -66,7 +66,13 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 
 export function requireDaemonToken(req: Request, res: Response, next: NextFunction) {
   const auth = req.headers.authorization
-  if (!auth?.startsWith('Bearer ') || auth.slice(7) !== env.daemonToken) {
+  if (!auth?.startsWith('Bearer ')) {
+    res.status(401).json({ error: 'Invalid daemon token' })
+    return
+  }
+  const provided = Buffer.from(auth.slice(7))
+  const expected = Buffer.from(env.daemonToken)
+  if (provided.length !== expected.length || !timingSafeEqual(provided, expected)) {
     res.status(401).json({ error: 'Invalid daemon token' })
     return
   }
