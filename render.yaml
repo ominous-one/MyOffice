@@ -50,4 +50,3 @@ databases:
     plan: starter
     region: oregon
     ipAllowList: []
-    maxmemoryPolicy: noeviction
