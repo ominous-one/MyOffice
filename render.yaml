@@ -37,6 +37,12 @@ services:
       - key: LOG_LEVEL
         value: info
 
+  - type: redis
+    name: claude-cowork-redis
+    plan: free
+    region: oregon
+    ipAllowList: []
+
 databases:
   - name: claude-cowork-db
     plan: free
@@ -44,9 +50,4 @@ databases:
     user: cowork
     region: oregon
     postgresMajorVersion: 16
-    ipAllowList: []
-
-  - name: claude-cowork-redis
-    plan: free
-    region: oregon
     ipAllowList: []
