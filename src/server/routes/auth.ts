@@ -42,14 +42,20 @@ router.post('/login', loginLimiter, async (req, res) => {
   )
   const tokenHash = createHash('sha256').update(token.split('.')[2]).digest('hex')
 
-  await db.insert(sessions).values({
-    id: sessionId,
-    tokenHash,
-    deviceLabel: detectDevice(req.headers['user-agent']),
-    userAgent: req.headers['user-agent'],
-    ipAddress: req.ip ?? null,
-    expiresAt: new Date(Date.now() + SESSION_DURATION_SECONDS * 1000),
-  })
+  try {
+    await db.insert(sessions).values({
+      id: sessionId,
+      tokenHash,
+      deviceLabel: detectDevice(req.headers['user-agent']),
+      userAgent: req.headers['user-agent'],
+      ipAddress: req.ip ?? null,
+      expiresAt: new Date(Date.now() + SESSION_DURATION_SECONDS * 1000),
+    })
+  } catch (err) {
+    console.error('[auth] session insert failed:', err)
+    res.status(500).json({ error: 'Login failed' })
+    return
+  }
 
   res.cookie('cowork_session', token, {
     httpOnly: true,
