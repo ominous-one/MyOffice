@@ -7,6 +7,7 @@ services:
     branch: main
     healthCheckPath: /api/health
     buildCommand: npm ci --ignore-scripts && npm run build
+    preDeployCommand: node dist/server/db/migrate.js
     startCommand: node dist/server/index.js
     envVars:
       - key: NODE_ENV
