@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import { createHash } from 'crypto'
+import { createHash, randomUUID } from 'crypto'
 import rateLimit from 'express-rate-limit'
 import { db } from '../db/index.js'
 import { sessions } from '../db/schema.js'
@@ -34,22 +34,22 @@ router.post('/login', loginLimiter, async (req, res) => {
     return
   }
 
-  const [session] = await db.insert(sessions).values({
-    tokenHash: '', // placeholder — updated after JWT sign
+  const sessionId = randomUUID()
+  const token = jwt.sign(
+    { sessionId },
+    env.jwtSecret,
+    { expiresIn: SESSION_DURATION_SECONDS }
+  )
+  const tokenHash = createHash('sha256').update(token.split('.')[2]).digest('hex')
+
+  await db.insert(sessions).values({
+    id: sessionId,
+    tokenHash,
     deviceLabel: detectDevice(req.headers['user-agent']),
     userAgent: req.headers['user-agent'],
     ipAddress: req.ip ?? null,
     expiresAt: new Date(Date.now() + SESSION_DURATION_SECONDS * 1000),
-  }).returning()
-
-  const token = jwt.sign(
-    { sessionId: session.id },
-    env.jwtSecret,
-    { expiresIn: SESSION_DURATION_SECONDS }
-  )
-
-  const tokenHash = createHash('sha256').update(token.split('.')[2]).digest('hex')
-  await db.update(sessions).set({ tokenHash }).where(eq(sessions.id, session.id))
+  })
 
   res.cookie('cowork_session', token, {
     httpOnly: true,
