@@ -28,9 +28,10 @@ export async function runTask(
   // claude args — non-interactive, print mode
   const args = [
     '--print',
-    '--no-markdown',
+    '--dangerously-skip-permissions',
     websearchEnabled ? '--allowedTools' : '--disallowedTools',
     websearchEnabled ? 'Bash,Read,Write,Edit,WebSearch,WebFetch' : 'WebSearch,WebFetch',
+    '--',
     prompt,
   ]
 
@@ -43,10 +44,12 @@ export async function runTask(
     },
     windowsHide: true,
   })
+  console.log(`[task-runner] spawned claude PID ${child.pid} for task ${taskId} in ${localPath}`)
 
   // Cancel listener
   const cancelSub = new Redis(config.redisUrl, { maxRetriesPerRequest: null })
-  cancelSub.subscribe(`tasks:${taskId}:cancel`)
+  cancelSub.on('error', (err) => console.error('[task-runner] cancelSub error:', err.message))
+  cancelSub.subscribe(`tasks:${taskId}:cancel`).catch(() => {})
   cancelSub.on('message', (_ch, msg) => {
     if (msg === '1') {
       child.kill('SIGTERM')
@@ -85,9 +88,23 @@ export async function runTask(
   child.stderr.on('data', (d) => onChunk('stderr', d))
 
   await new Promise<void>((resolve) => {
+    child.on('error', async (err) => {
+      clearTimeout(timeout)
+      try { cancelSub.disconnect() } catch {}
+      console.error(`[task-runner] spawn error for task ${taskId}:`, err.message)
+      await patchTask(baseUrl, taskId, authHeader, {
+        status: 'failed',
+        errorMessage: `Spawn error: ${err.message}`,
+        transcript,
+        truncated,
+        completedAt: new Date().toISOString(),
+      }).catch((e) => console.error('[task-runner] failed to patch task after spawn error:', e))
+      resolve()
+    })
+
     child.on('exit', async (code, signal) => {
       clearTimeout(timeout)
-      cancelSub.disconnect()
+      try { cancelSub.disconnect() } catch {}
 
       let status: string
       if (signal === 'SIGTERM' || signal === 'SIGKILL') {
