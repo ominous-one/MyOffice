@@ -22,7 +22,7 @@ Legend: ✅ Confirmed by code/evidence | ⏳ Pending smoke test | ⚠️ Operato
 | 6-month canary (3 projects, dispatch without terminal) | ✅ | Architecture confirmed; Slice 1 is the on-track precondition |
 | Explicit non-goal (not a team tool) respected | ✅ | No multi-user features; single-password auth; no `users` table |
 
-**Round 1 verdict:** ⏳ PENDING smoke test + C-4 operator evidence
+**Round 1 verdict:** ⚠️ Smoke test 5/7 steps PASS; C-4 operator evidence still required
 
 ---
 
@@ -51,15 +51,15 @@ Slice 1 scope covers: login → project list → workstation → dispatch → st
 
 | Workflow step | Status | Evidence |
 |---|---|---|
-| Login at URL | ⏳ | S1-T18 smoke test step 1 |
-| Project list visible immediately after login | ⏳ | S1-T18 smoke test step 2 |
-| Project workstation accessible | ⏳ | S1-T18 smoke test |
-| Task dispatch from workstation | ⏳ | S1-T18 smoke test step 4 |
-| Streamed output appears without browser refresh | ⏳ | S1-T18 smoke test step 5 |
-| Task state persists across browser close/refresh | ⏳ | S1-T18 smoke test step 7 |
-| Frequency: daily use (fast login, low friction) | ⏳ | TTI ≤ 3s (S1-T19) |
+| Login at URL | ✅ | S1-T18 smoke test step 1 — PASS |
+| Project list visible immediately after login | ✅ | S1-T18 smoke test step 2 — PASS |
+| Project workstation accessible | ✅ | S1-T18 smoke test — PASS |
+| Task dispatch from workstation | ✅ | S1-T18 smoke test step 4 — PASS |
+| Streamed output appears without browser refresh | ⚠️ | S1-T18 step 5 — PENDING daemon (operator) |
+| Task state persists across browser close/refresh | ✅ | S1-T18 smoke test step 7 — PASS |
+| Frequency: daily use (fast login, low friction) | ✅ | TTI ≤ 3s PASS — FCP 128ms (UU-3 `uu-3-tti.md`) |
 
-**Round 3 verdict:** ⏳ PENDING smoke test
+**Round 3 verdict:** ⚠️ 6/7 steps confirmed; streaming output pending C-4 operator evidence
 
 ---
 
@@ -69,14 +69,14 @@ Slice 1 scope covers: login → project list → workstation → dispatch → st
 
 | Data check | Status | Evidence |
 |---|---|---|
-| Tasks persist in Postgres across sessions | ⏳ | S1-T18 smoke test step 7 (refresh) |
+| Tasks persist in Postgres across sessions | ✅ | S1-T18 smoke test step 7 — PASS (refresh confirmed) |
 | No invented/placeholder data rendered | ✅ | Zero-project empty state; task list empty until real dispatch |
 | `C-3` (no fake data) enforced in code | ✅ | Empty states only in components; no hardcoded demo entries |
 | Session data stored in DB (not only JWT) | ✅ | `sessions` table; `requireAuth` middleware validates DB row |
 | Source of truth: HQ DB wins on tasks | ✅ | Task state comes only from DB via `/api/tasks` |
-| Data survives browser close | ⏳ | S1-T18 smoke test step 7 |
+| Data survives browser close | ✅ | S1-T18 smoke test step 7 — PASS |
 
-**Round 4 verdict:** ⏳ PENDING smoke test step 7 for persistence confirmation; code checks PASS
+**Round 4 verdict:** ✅ CONFIRMED — persistence verified by smoke test + code checks
 
 ---
 
@@ -133,14 +133,14 @@ Slice 1 scope covers: login → project list → workstation → dispatch → st
 
 | Reporting check | Status | Notes |
 |---|---|---|
-| All projects visible on dashboard | ⏳ | S1-T18 smoke test step 2 |
-| Task list visible per project | ⏳ | S1-T18 smoke test steps 4–6 |
+| All projects visible on dashboard | ✅ | S1-T18 smoke test step 2 — PASS |
+| Task list visible per project | ✅ | S1-T18 smoke test step 4 — PASS (queued tasks visible) |
 | Status by color AND label (not color alone) | ✅ | ADHD requirement met in component design |
-| 10-second visual scan possible | ⏳ | Confirmed by smoke test UX observation |
+| 10-second visual scan possible | ✅ | Smoke test UX observation — project card + task badge scannable |
 | CEO morning briefing | ❌ | Explicitly out of Slice 1 scope — deferred to Slice 2 |
 | Cost monitoring visible to operator | ✅ | `/api/settings/cost` endpoint ships in S1-T17 |
 
-**Round 8 verdict:** ⏳ Partial — CEO briefing intentionally deferred; task/project reporting confirms by smoke test
+**Round 8 verdict:** ⚠️ Partial — project/task reporting confirmed; CEO briefing intentionally deferred to Slice 2
 
 ---
 
@@ -167,7 +167,7 @@ Slice 1 scope covers: login → project list → workstation → dispatch → st
 | Metric | Status | Notes |
 |---|---|---|
 | Day 10 precondition: daemon reliable, real tasks execute | ⚠️ | Requires C-2 + C-4 operator evidence |
-| Day 10 precondition: task dispatch works end-to-end | ⏳ | S1-T18 smoke test |
+| Day 10 precondition: task dispatch works end-to-end | ✅ | S1-T18 smoke test steps 1–4, 7 PASS |
 | Day 10 precondition: TTI ≤ 3s (low friction re-entry) | ⏳ | S1-T19 measurement |
 | Pivot trigger: if daemon unreliable, stop and fix | ✅ | C-2 is a hard gate; must pass before Slice 2 starts |
 
@@ -179,16 +179,16 @@ Slice 1 scope covers: login → project list → workstation → dispatch → st
 
 | Round | Topic | Status |
 |---|---|---|
-| 1 | Goals | ⏳ Pending C-4 + smoke test |
+| 1 | Goals | ⚠️ Smoke test 5/7 PASS; C-4 pending operator |
 | 2 | Users | ✅ Confirmed |
-| 3 | Workflow | ⏳ Pending smoke test |
-| 4 | Data | ⏳ Pending smoke test (code checks pass) |
+| 3 | Workflow | ⚠️ 6/7 steps confirmed; streaming output pending C-4 |
+| 4 | Data | ✅ Confirmed — persistence verified by smoke test |
 | 5 | Monetization | ✅ Confirmed |
 | 6 | Risks | ⚠️ C-4 + C-2 pending operator |
 | 7 | Integrations | ⚠️ C-4 pending operator |
-| 8 | Reporting | ⏳ Partial — CEO briefing deferred intentionally |
+| 8 | Reporting | ⚠️ Partial — project/task reporting confirmed; CEO briefing deferred |
 | 9 | Edge cases | ✅ Confirmed (Slice 1 scope) |
-| 10 | Success metrics | ⏳ Pending smoke test + TTI |
+| 10 | Success metrics | ⚠️ TTI + dispatch confirmed; C-2 + C-4 pending operator |
 
 ### Gate status
 
@@ -196,10 +196,10 @@ Slice 1 scope covers: login → project list → workstation → dispatch → st
 
 1. ✅ Security review — DONE (`sec-auth-review.md`)
 2. ✅ Canvas sprites — DONE (`uu-7-canvas.md`)
-3. ⏳ `slice-1-smoke.md` — S1-T18 end-to-end smoke test (blocked on Render deploy)
-4. ⏳ `uu-3-tti.md` — TTI ≤ 3s measurement (blocked on deploy)
+3. ✅ `slice-1-smoke.md` — S1-T18 steps 1–4, 7 PASS; steps 5–6 pending daemon
+4. ✅ `uu-3-tti.md` — TTI ≤ 3s PASS — FCP 128ms confirmed
 5. ⚠️ `uu-2-claude-cli.md` — Windows PowerShell evidence (operator)
 6. ⚠️ `c-4-real-claude.md` — Real claude child process evidence (operator)
 7. ⚠️ `c-2-daemon-reliability.md` — Kill + NSSM restart evidence (operator)
 
-**The deploy fix (commit c7f0cfd) must be triggered manually in Render dashboard first.**
+**COO sign-off:** [pending operator evidence for C-4, UU-2, C-2]
