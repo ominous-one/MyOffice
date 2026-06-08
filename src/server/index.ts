@@ -14,6 +14,7 @@ import agentsRouter from './routes/agents.js'
 import daemonRouter from './routes/daemon.js'
 import healthRouter from './routes/health.js'
 import settingsRouter from './routes/settings.js'
+import briefingRouter from './routes/briefing.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -39,6 +40,7 @@ app.use('/api/tasks', tasksRouter)
 app.use('/api/agents', agentsRouter)
 app.use('/api/daemon', daemonRouter)
 app.use('/api/settings', settingsRouter)
+app.use('/api/briefing', briefingRouter)
 
 // Serve React client in production
 if (env.isProduction) {

@@ -1,0 +1,18 @@
+[Unit]
+Description=MyOffice HQ Daemon
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ominous
+WorkingDirectory=/home/ominous/projects/claude-cowork
+EnvironmentFile=/home/ominous/.myoffice-daemon.env
+ExecStart=/home/ominous/projects/claude-cowork/node_modules/.bin/tsx src/daemon/src/index.ts
+Restart=always
+RestartSec=5
+StandardOutput=append:/home/ominous/.myoffice-daemon.log
+StandardError=append:/home/ominous/.myoffice-daemon.log
+
+[Install]
+WantedBy=default.target

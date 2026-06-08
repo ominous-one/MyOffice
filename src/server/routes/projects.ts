@@ -3,6 +3,7 @@ import { db } from '../db/index.js'
 import { projects, activityFeedItems, checkpointSaves, conversationMessages, tasks } from '../db/schema.js'
 import { eq, and, isNull, desc } from 'drizzle-orm'
 import { requireAuth } from '../middleware/auth.js'
+import { env } from '../config/env.js'
 import type { CreateProjectBody, UpdateProjectBody } from '../../shared/types.js'
 
 const router = Router()
@@ -107,6 +108,78 @@ router.get('/:id/activity', async (req, res) => {
     .orderBy(desc(activityFeedItems.occurredAt))
     .limit(50)
   res.json(items)
+})
+
+router.post('/:id/sync-github', async (req, res) => {
+  const [project] = await db
+    .select()
+    .from(projects)
+    .where(and(eq(projects.id, req.params.id), isNull(projects.deletedAt)))
+    .limit(1)
+  if (!project) { res.status(404).json({ error: 'Not found' }); return }
+  if (!project.githubOwner || !project.githubRepo) {
+    res.status(400).json({ error: 'Project has no GitHub repo configured' })
+    return
+  }
+  if (!env.githubToken) {
+    res.status(503).json({ error: 'GITHUB_TOKEN not configured on server' })
+    return
+  }
+
+  const apiUrl = `https://api.github.com/repos/${project.githubOwner}/${project.githubRepo}/commits?per_page=15`
+  const ghRes = await fetch(apiUrl, {
+    headers: {
+      Authorization: `Bearer ${env.githubToken}`,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+  })
+
+  if (!ghRes.ok) {
+    const reachable = ghRes.status !== 404 && ghRes.status !== 403
+    await db.update(projects).set({
+      githubReachable: reachable,
+      lastGithubSyncAt: new Date(),
+      lastGithubStatus: 'failed',
+      updatedAt: new Date(),
+    }).where(eq(projects.id, project.id))
+    res.status(502).json({ error: `GitHub API returned ${ghRes.status}` })
+    return
+  }
+
+  type GhCommit = {
+    sha: string
+    commit: { message: string; author: { name: string; date: string } }
+    html_url: string
+    author: { login: string } | null
+  }
+  const commits = await ghRes.json() as GhCommit[]
+
+  for (const c of commits) {
+    const summary = `${c.commit.message.split('\n')[0].slice(0, 120)} — ${c.author?.login ?? c.commit.author.name}`
+    await db
+      .insert(activityFeedItems)
+      .values({
+        projectId: project.id,
+        source: 'github',
+        eventType: 'push',
+        externalId: c.sha,
+        summary,
+        url: c.html_url,
+        metadata: { sha: c.sha, author: c.author?.login ?? c.commit.author.name },
+        occurredAt: new Date(c.commit.author.date),
+      })
+      .onConflictDoNothing()
+  }
+
+  await db.update(projects).set({
+    githubReachable: true,
+    lastGithubSyncAt: new Date(),
+    lastGithubStatus: 'success',
+    updatedAt: new Date(),
+  }).where(eq(projects.id, project.id))
+
+  res.json({ synced: commits.length })
 })
 
 router.get('/:id/checkpoints', async (req, res) => {

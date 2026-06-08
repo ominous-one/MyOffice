@@ -2,14 +2,15 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSocket } from '../hooks/useSocket'
 import { formatRelative } from '../lib/utils'
-import type { Project } from '../../../shared/types'
-import { Plus, FolderOpen, Circle, X, ChevronRight } from 'lucide-react'
+import type { Project, BriefingGeneration } from '../../../shared/types'
+import { Plus, FolderOpen, Circle, X, ChevronRight, Sparkles } from 'lucide-react'
 import * as Dialog from '@radix-ui/react-dialog'
 
 export function Dashboard() {
   const navigate = useNavigate()
   const { connected } = useSocket()
   const [projects, setProjects] = useState<Project[]>([])
+  const [briefing, setBriefing] = useState<BriefingGeneration | null | undefined>(undefined)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState({ name: '', localPath: '', repoUrl: '' })
   const [submitting, setSubmitting] = useState(false)
@@ -20,6 +21,34 @@ export function Dashboard() {
       .then((r) => r.json())
       .then(setProjects)
   }, [])
+
+  useEffect(() => {
+    // Try cached briefing first, then generate if missing
+    fetch('/api/briefing/today', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((data: BriefingGeneration | null) => {
+        if (data && !data.dismissedAt) {
+          setBriefing(data)
+        } else if (!data) {
+          fetch('/api/briefing/generate', { method: 'POST', credentials: 'include' })
+            .then((r) => r.json())
+            .then((generated: BriefingGeneration) => {
+              if (generated?.content) setBriefing(generated)
+              else setBriefing(null)
+            })
+            .catch(() => setBriefing(null))
+        } else {
+          setBriefing(null)
+        }
+      })
+      .catch(() => setBriefing(null))
+  }, [])
+
+  async function dismissBriefing() {
+    if (!briefing) return
+    await fetch(`/api/briefing/${briefing.id}/dismiss`, { method: 'POST', credentials: 'include' })
+    setBriefing(null)
+  }
 
   async function createProject(e: FormEvent) {
     e.preventDefault()
@@ -104,11 +133,11 @@ export function Dashboard() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Local path (Windows)</label>
+                    <label className="block text-sm font-medium mb-1">Local path (WSL)</label>
                     <input
                       value={form.localPath}
                       onChange={(e) => setForm({ ...form, localPath: e.target.value })}
-                      placeholder="C:\Users\omino\projects\my-project"
+                      placeholder="/home/ominous/projects/my-project"
                       className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm
                                  focus:outline-none focus:border-brand-500 placeholder:text-[var(--muted)] font-mono"
                     />
@@ -142,6 +171,21 @@ export function Dashboard() {
           </Dialog.Root>
         </div>
       </div>
+
+      {/* Jarvis morning briefing banner */}
+      {briefing && (
+        <div className="mx-4 mt-4 rounded-xl border border-brand-700/50 bg-brand-950/40 px-4 py-3 flex items-start gap-3 animate-fade-in flex-shrink-0">
+          <Sparkles size={16} className="text-brand-400 mt-0.5 flex-shrink-0" />
+          <p className="text-sm text-[var(--text)] flex-1 leading-relaxed">{briefing.content}</p>
+          <button
+            onClick={dismissBriefing}
+            className="text-[var(--muted)] hover:text-[var(--text)] transition-colors flex-shrink-0"
+            aria-label="Dismiss briefing"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
       {/* Project grid */}
       <div className="flex-1 overflow-y-auto p-4">

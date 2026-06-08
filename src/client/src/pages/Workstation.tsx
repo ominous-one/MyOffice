@@ -3,10 +3,10 @@ import { useParams } from 'react-router-dom'
 import { useSocket } from '../hooks/useSocket'
 import { TaskItem } from '../components/TaskItem'
 import { formatRelative } from '../lib/utils'
-import type { Project, Task, ConversationMessage } from '../../../shared/types'
-import { Send, CheckSquare, MessageSquare, Zap } from 'lucide-react'
+import type { Project, Task, ConversationMessage, ActivityFeedItem } from '../../../shared/types'
+import { Send, CheckSquare, MessageSquare, Zap, GitCommit, RefreshCw, ExternalLink } from 'lucide-react'
 
-type TabId = 'tasks' | 'chat'
+type TabId = 'tasks' | 'chat' | 'activity'
 
 export function Workstation() {
   const { id: projectId } = useParams<{ id: string }>()
@@ -14,6 +14,8 @@ export function Workstation() {
   const [project, setProject] = useState<Project | null>(null)
   const [tasks, setTasks] = useState<Task[]>([])
   const [messages, setMessages] = useState<ConversationMessage[]>([])
+  const [activity, setActivity] = useState<ActivityFeedItem[]>([])
+  const [syncingGithub, setSyncingGithub] = useState(false)
   const [liveOutputs, setLiveOutputs] = useState<Record<string, string>>({})
   const [tab, setTab] = useState<TabId>('tasks')
   const [taskInput, setTaskInput] = useState('')
@@ -30,10 +32,12 @@ export function Workstation() {
       fetch(`/api/projects/${projectId}`, { credentials: 'include' }).then((r) => r.json()),
       fetch(`/api/projects/${projectId}/tasks`, { credentials: 'include' }).then((r) => r.json()),
       fetch(`/api/projects/${projectId}/messages`, { credentials: 'include' }).then((r) => r.json()),
-    ]).then(([p, t, m]) => {
+      fetch(`/api/projects/${projectId}/activity`, { credentials: 'include' }).then((r) => r.json()),
+    ]).then(([p, t, m, a]) => {
       setProject(p)
       setTasks(t)
       setMessages(m)
+      setActivity(Array.isArray(a) ? a : [])
     })
   }, [projectId])
 
@@ -138,6 +142,18 @@ export function Workstation() {
     fetch(`/api/tasks/${taskId}/cancel`, { method: 'POST', credentials: 'include' })
   }
 
+  async function syncGithub() {
+    if (!projectId || syncingGithub) return
+    setSyncingGithub(true)
+    try {
+      await fetch(`/api/projects/${projectId}/sync-github`, { method: 'POST', credentials: 'include' })
+      const fresh = await fetch(`/api/projects/${projectId}/activity`, { credentials: 'include' }).then((r) => r.json())
+      setActivity(Array.isArray(fresh) ? fresh : [])
+    } finally {
+      setSyncingGithub(false)
+    }
+  }
+
   if (!project) {
     return <div className="flex items-center justify-center h-full text-[var(--muted)] text-sm">Loading…</div>
   }
@@ -158,7 +174,7 @@ export function Workstation() {
 
       {/* Tab bar */}
       <div className="flex border-b border-[var(--border)] flex-shrink-0">
-        {([['tasks', CheckSquare, 'Tasks'], ['chat', MessageSquare, 'Chat']] as const).map(([id, Icon, label]) => (
+        {([['tasks', CheckSquare, 'Tasks'], ['chat', MessageSquare, 'Chat'], ['activity', GitCommit, 'Activity']] as const).map(([id, Icon, label]) => (
           <button
             key={id}
             onClick={() => setTab(id)}
@@ -272,6 +288,58 @@ export function Workstation() {
               <Send size={14} />
             </button>
           </form>
+        </div>
+      )}
+
+      {/* Activity tab */}
+      {tab === 'activity' && (
+        <div className="flex flex-col min-h-0 flex-1">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border)] flex-shrink-0">
+            <span className="text-xs text-[var(--muted)]">
+              {activity.length > 0 ? `${activity.length} commits` : 'No activity yet'}
+            </span>
+            {project.githubOwner && project.githubRepo ? (
+              <button
+                onClick={syncGithub}
+                disabled={syncingGithub}
+                className="flex items-center gap-1.5 text-xs text-brand-400 hover:text-brand-300 disabled:opacity-50 transition-colors"
+              >
+                <RefreshCw size={12} className={syncingGithub ? 'animate-spin' : ''} />
+                {syncingGithub ? 'Syncing…' : 'Sync'}
+              </button>
+            ) : (
+              <span className="text-xs text-[var(--muted)]">No GitHub repo configured</span>
+            )}
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-1">
+            {activity.length === 0 ? (
+              <div className="text-center text-[var(--muted)] text-sm py-8">
+                {project.githubOwner
+                  ? 'No commits synced yet. Click Sync to pull from GitHub.'
+                  : 'Add a GitHub repo URL to this project to see commit history.'}
+              </div>
+            ) : (
+              activity.map((item) => (
+                <div key={item.id} className="flex items-start gap-2.5 py-2 border-b border-[var(--border)]/50 last:border-0">
+                  <GitCommit size={13} className="text-[var(--muted)] mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm leading-snug truncate">{item.summary}</p>
+                    <p className="text-xs text-[var(--muted)] mt-0.5">{formatRelative(item.occurredAt)}</p>
+                  </div>
+                  {item.url && (
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[var(--muted)] hover:text-brand-400 transition-colors flex-shrink-0"
+                    >
+                      <ExternalLink size={12} />
+                    </a>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
         </div>
       )}
     </div>
