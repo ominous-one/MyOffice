@@ -11,3 +11,4 @@ daemon.toml
 *.exe
 *.tsbuildinfo
 .render-secrets.txt
+vendor/

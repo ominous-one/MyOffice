@@ -2,8 +2,11 @@ import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { Login } from './pages/Login'
 import { Dashboard } from './pages/Dashboard'
+import { Office } from './pages/Office'
 import { Workstation } from './pages/Workstation'
 import { DaemonStatus } from './components/DaemonStatus'
+import { JarvisPanel } from './components/JarvisPanel'
+import { OfficeTabBar } from './components/OfficeTabBar'
 import { useAuth } from './hooks/useAuth'
 import { Home, LogOut } from 'lucide-react'
 
@@ -49,6 +52,8 @@ function AppShell({ children }: { children: React.ReactNode }) {
       <main className="flex-1 min-h-0 overflow-hidden">
         {children}
       </main>
+      <OfficeTabBar />
+      <JarvisPanel />
     </div>
   )
 }
@@ -59,6 +64,16 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route
         path="/"
+        element={
+          <ProtectedRoute>
+            <AppShell>
+              <Office />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/grid"
         element={
           <ProtectedRoute>
             <AppShell>

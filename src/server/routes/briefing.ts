@@ -5,7 +5,7 @@ import { briefingGenerations, tasks, projects } from '../db/schema.js'
 import { eq, desc, gte, and, isNull } from 'drizzle-orm'
 import Anthropic from '@anthropic-ai/sdk'
 import { env } from '../config/env.js'
-import { BRIEFING_GAP_HOURS } from '../config/models.js'
+import { BRIEFING_GAP_HOURS, MODEL_BY_AGENT_TIER } from '../config/models.js'
 
 const router = Router()
 const client = new Anthropic({ apiKey: env.anthropicApiKey })
@@ -83,8 +83,9 @@ ${contextLines}
 
 Write only the greeting. No preamble.`
 
+    const model = MODEL_BY_AGENT_TIER.jarvis_briefing
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model,
       max_tokens: 200,
       messages: [{ role: 'user', content: prompt }],
     })
@@ -97,7 +98,7 @@ Write only the greeting. No preamble.`
       briefingDate: today,
       triggerReason: 'session_entry_gap',
       content,
-      model: 'claude-sonnet-4-6',
+      model,
       inputTokens,
       outputTokens,
     }).returning()
